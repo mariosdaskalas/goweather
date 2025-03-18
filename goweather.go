@@ -69,52 +69,102 @@ type WeatherData struct {
 
 func main() {
 
+	var choice int
 	var latitude, longitude string
-
-	fmt.Print("Enter latitude: ")
-	_, err := fmt.Scanf("%v", &latitude)
-	if err != nil {
-		log.Fatalf("Error reading latitude: %v", err)
-	}
-
-	fmt.Print("Enter longitude: ")
-	_, err = fmt.Scanf("%v", &longitude)
-	if err != nil {
-		log.Fatalf("Error reading longitude: %v", err)
-	}
-
-	fmt.Printf("You entered latitude: %v and longitude: %v\n", latitude, longitude)
+	var city string
 
 	content, err := os.ReadFile("api.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	link := "https://api.openweathermap.org/data/2.5/weather?lat=" + string(latitude) + "&lon=" + string(longitude) + "&appid=" + string(content)
-	
-	resp, err := http.Get(link)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer resp.Body.Close()
+	fmt.Println("[0] : Entering latitude and longitude")
+	fmt.Println("[1] : Entering city")
+	fmt.Println("[Any other option] : Exit the program")
 
-	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Print("Enter choice: ")
+	_, err = fmt.Scanf("%d", &choice)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error reading choice: %v", err)
 	}
 
-	var weatherData WeatherData
+	if (choice == 0) {
 
-	err = json.Unmarshal(body, &weatherData)
-	if err != nil {
-		log.Fatalf("Error parsing JSON: %v", err)
+		// Latitude
+		fmt.Print("Enter latitude: ")
+		_, err := fmt.Scanf("%v", &latitude)
+		if err != nil {
+			log.Fatalf("Error reading latitude: %v", err)
+		}
+
+		// Enter Longtitude
+		fmt.Print("Enter longitude: ")
+		_, err = fmt.Scanf("%v", &longitude)
+		if err != nil {
+			log.Fatalf("Error reading longitude: %v", err)
+		}
+
+		link := "https://api.openweathermap.org/data/2.5/weather?lat=" + string(latitude) + "&lon=" + string(longitude) + "&appid=" + string(content)
+		
+		resp, err := http.Get(link)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var weatherData WeatherData
+
+		err = json.Unmarshal(body, &weatherData)
+		if err != nil {
+			log.Fatalf("Error parsing JSON: %v", err)
+		}
+		fmt.Printf("Location: %s, %s\n", weatherData.Name, weatherData.Sys.Country)
+		fmt.Printf("Weather: %s\n", weatherData.Weather[0].Description)
+		fmt.Printf("Temperature: %.2f°C\n", weatherData.Main.Temp-273.15)
+		fmt.Printf("Feels Like: %.2f°C\n", weatherData.Main.FeelsLike-273.15)
+		fmt.Printf("Humidity: %d\n", weatherData.Main.Humidity)
+		fmt.Printf("Wind Speed: %.2f m/s\n", weatherData.Wind.Speed)
+		fmt.Printf("Pressure: %d hPa\n", weatherData.Main.Pressure)
+	} else if (choice == 1) {
+
+		// Enter City
+		fmt.Print("Enter city: ")
+		_, err = fmt.Scanf("%v", &city)
+		if err != nil {
+			log.Fatalf("Error reading city: %v", err)
+		}
+
+		link := "https://api.openweathermap.org/data/2.5/weather?q=" + string(city) + "&appid=" + string(content)
+		
+		resp, err := http.Get(link)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var weatherData WeatherData
+
+		err = json.Unmarshal(body, &weatherData)
+		if err != nil {
+			log.Fatalf("Error parsing JSON: %v", err)
+		}
+		fmt.Printf("Location: %s, %s\n", weatherData.Name, weatherData.Sys.Country)
+		fmt.Printf("Weather: %s\n", weatherData.Weather[0].Description)
+		fmt.Printf("Temperature: %.2f°C\n", weatherData.Main.Temp-273.15)
+		fmt.Printf("Feels Like: %.2f°C\n", weatherData.Main.FeelsLike-273.15)
+		fmt.Printf("Humidity: %d\n", weatherData.Main.Humidity)
+		fmt.Printf("Wind Speed: %.2f m/s\n", weatherData.Wind.Speed)
+		fmt.Printf("Pressure: %d hPa\n", weatherData.Main.Pressure)
+	} else {
+		fmt.Println("Invalid choice. Terminating the program")
+		return
 	}
-
-	fmt.Printf("Location: %s, %s\n", weatherData.Name, weatherData.Sys.Country)
-	fmt.Printf("Weather: %s\n", weatherData.Weather[0].Description)
-	fmt.Printf("Temperature: %.2f°C\n", weatherData.Main.Temp-273.15)
-	fmt.Printf("Feels Like: %.2f°C\n", weatherData.Main.FeelsLike-273.15)
-	fmt.Printf("Humidity: %d\n", weatherData.Main.Humidity)
-	fmt.Printf("Wind Speed: %.2f m/s\n", weatherData.Wind.Speed)
-	fmt.Printf("Pressure: %d hPa\n", weatherData.Main.Pressure)
 }
