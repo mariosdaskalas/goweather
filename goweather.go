@@ -66,6 +66,37 @@ type WeatherData struct {
 	Cod        int         `json:"cod"`
 }
 
+type Coordinates struct {
+	Lon float64 `json:"lon"`
+	Lat float64 `json:"lat"`
+}
+
+type Main2 struct {
+	AQI int `json:"aqi"`
+}
+
+type Components struct {
+	CO    float64 `json:"co"`
+	NO    float64 `json:"no"`
+	NO2   float64 `json:"no2"`
+	O3    float64 `json:"o3"`
+	SO2   float64 `json:"so2"`
+	PM25  float64 `json:"pm2_5"`
+	PM10  float64 `json:"pm10"`
+	NH3   float64 `json:"nh3"`
+}
+
+type Item struct {
+	Main      Main       `json:"main"`
+	Components Components `json:"components"`
+	Dt        int64      `json:"dt"`
+}
+
+type Response struct {
+	Coord Coordinates `json:"coord"`
+	List  []Item      `json:"list"`
+}
+
 
 func main() {
 
@@ -129,6 +160,32 @@ func main() {
 		fmt.Printf("Humidity: %d\n", weatherData.Main.Humidity)
 		fmt.Printf("Wind Speed: %.2f m/s\n", weatherData.Wind.Speed)
 		fmt.Printf("Pressure: %d hPa\n", weatherData.Main.Pressure)
+
+		// Air pollution
+
+		link2 := "http://api.openweathermap.org/data/2.5/air_pollution?lat=" + string(latitude) + "&lon=" + string(longitude) + "&appid=" + string(content)
+		
+		resp, err = http.Get(link2)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var components Components
+
+		err = json.Unmarshal(body, &components)
+		if err != nil {
+			log.Fatalf("Error unmarshaling JSON: %v", err)
+		}
+
+
+		// fmt.Printf("Weather: %s\n", weatherData.Weather[0].Description)
+		fmt.Printf("Сoncentration of CO: %.2f°C\n", Components.List[0].Components.CO)
+
 	} else if (choice == 1) {
 
 		// Enter City
