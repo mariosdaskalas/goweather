@@ -5,7 +5,7 @@ Create an api.txt file containing the API Key from https://home.openweathermap.o
 According to (https://openweathermap.org/faq), "Your API key will be activated automatically, up to 2 hours after your successful registration."
 
 ```shell
-git clone https://github.com/mariosdaskalas/goweather && cd goweather && touch api.txt && echo "PLACE_YOUR_API_KEY_HERE" > api.txt && go run .
+git clone https://github.com/mariosdaskalas/goweather && cd goweather && touch api.txt && echo -n "PLACE_YOUR_API_KEY_HERE" > api.txt && go run .
 ```
 
 ```shell
