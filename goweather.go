@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"encoding/json"
+	"strconv"
 )
 
 type Weather struct {
@@ -97,6 +99,14 @@ type Response struct {
 	List  []Item      `json:"list"`
 }
 
+type City struct {
+	Name       string     `json:"name"`
+	Lat        float64    `json:"lat"`
+	Lon        float64    `json:"lon"`
+	Country    string     `json:"country"`
+	State      string     `json:"state"`
+}
+
 
 func main() {
 
@@ -109,9 +119,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("[0] : Entering latitude and longitude")
-	fmt.Println("[1] : Entering city")
-	fmt.Println("[Any other option] : Exit the program")
+	fmt.Println()
+	fmt.Println("[0] : Entering Latitude and Longitude")
+	fmt.Println("[1] : Entering City")
+	fmt.Println("[Any other Option] : Exit the program")
+	fmt.Println()
+	fmt.Println("Use https://www.latlong.net to find Latitude and Longitude of a Location")
+	fmt.Println()
 
 	fmt.Print("Enter choice: ")
 	_, err = fmt.Scanf("%d", &choice)
@@ -122,14 +136,14 @@ func main() {
 	if (choice == 0) {
 
 		// Latitude
-		fmt.Print("Enter latitude: ")
+		fmt.Print("Enter Latitude: ")
 		_, err := fmt.Scanf("%v", &latitude)
 		if err != nil {
 			log.Fatalf("Error reading latitude: %v", err)
 		}
 
 		// Enter Longtitude
-		fmt.Print("Enter longitude: ")
+		fmt.Print("Enter Longitude: ")
 		_, err = fmt.Scanf("%v", &longitude)
 		if err != nil {
 			log.Fatalf("Error reading longitude: %v", err)
@@ -153,16 +167,23 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error parsing JSON: %v", err)
 		}
+
+		c := exec.Command("clear")
+		c.Stdout = os.Stdout
+		c.Run()
+
+		fmt.Println()
+		fmt.Println("*** Daily forecast weather API response ***")
+		fmt.Println()
 		fmt.Printf("Location: %s, %s\n", weatherData.Name, weatherData.Sys.Country)
 		fmt.Printf("Weather: %s\n", weatherData.Weather[0].Description)
 		fmt.Printf("Temperature: %.2f°C\n", weatherData.Main.Temp-273.15)
 		fmt.Printf("Feels Like: %.2f°C\n", weatherData.Main.FeelsLike-273.15)
-		fmt.Printf("Humidity: %d\n", weatherData.Main.Humidity)
+		fmt.Printf("Humidity: %d %% \n", weatherData.Main.Humidity)
 		fmt.Printf("Wind Speed: %.2f m/s\n", weatherData.Wind.Speed)
 		fmt.Printf("Pressure: %d hPa\n", weatherData.Main.Pressure)
 
 		// Air pollution
-
 		link2 := "http://api.openweathermap.org/data/2.5/air_pollution?lat=" + string(latitude) + "&lon=" + string(longitude) + "&appid=" + string(content)
 		
 		resp, err = http.Get(link2)
@@ -175,21 +196,30 @@ func main() {
 			log.Fatal(err)
 		}
 
-		var components Components
+		var response Response
 
-		err = json.Unmarshal(body, &components)
+		err = json.Unmarshal(body, &response)
 		if err != nil {
 			log.Fatalf("Error unmarshaling JSON: %v", err)
 		}
 
-
-		// fmt.Printf("Weather: %s\n", weatherData.Weather[0].Description)
-		fmt.Printf("Сoncentration of CO: %.2f°C\n", Components.List[0].Components.CO)
+		fmt.Println()
+		fmt.Println("*** Air Pollution API response ***")
+		fmt.Println()
+		fmt.Printf("Сoncentration of Carbon monoxide: %.2f μg/m3\n", response.List[0].Components.CO)
+		fmt.Printf("Сoncentration of Nitrogen monoxide: %.2f μg/m3\n", response.List[0].Components.NO)
+		fmt.Printf("Сoncentration of Nitrogen dioxide: %.2f μg/m3\n", response.List[0].Components.NO2)
+		fmt.Printf("Сoncentration of Ozone: %.2f μg/m3\n", response.List[0].Components.O3)
+		fmt.Printf("Сoncentration of Sulphur dioxide: %.2f μg/m3\n", response.List[0].Components.SO2)
+		fmt.Printf("Сoncentration of Fine particles matter: %.2f μg/m3\n", response.List[0].Components.PM25)
+		fmt.Printf("Сoncentration of Coarse particulate matter: %.2f μg/m3\n", response.List[0].Components.PM10)
+		fmt.Printf("Сoncentration of Ammonia: %.2f μg/m3\n", response.List[0].Components.NH3)
+		fmt.Println()
 
 	} else if (choice == 1) {
 
 		// Enter City
-		fmt.Print("Enter city: ")
+		fmt.Print("Enter City: ")
 		_, err = fmt.Scanf("%v", &city)
 		if err != nil {
 			log.Fatalf("Error reading city: %v", err)
@@ -213,13 +243,87 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error parsing JSON: %v", err)
 		}
+		c := exec.Command("clear")
+		c.Stdout = os.Stdout
+		c.Run()
+
+		fmt.Println()
+		fmt.Println("*** Daily forecast weather API response ***")
+		fmt.Println()
 		fmt.Printf("Location: %s, %s\n", weatherData.Name, weatherData.Sys.Country)
 		fmt.Printf("Weather: %s\n", weatherData.Weather[0].Description)
 		fmt.Printf("Temperature: %.2f°C\n", weatherData.Main.Temp-273.15)
 		fmt.Printf("Feels Like: %.2f°C\n", weatherData.Main.FeelsLike-273.15)
-		fmt.Printf("Humidity: %d\n", weatherData.Main.Humidity)
+		fmt.Printf("Humidity: %d %% \n", weatherData.Main.Humidity)
 		fmt.Printf("Wind Speed: %.2f m/s\n", weatherData.Wind.Speed)
 		fmt.Printf("Pressure: %d hPa\n", weatherData.Main.Pressure)
+
+		link2 := "http://api.openweathermap.org/geo/1.0/direct?q=" + city + "&limit=1&appid=" + string(content)
+
+		resp, err = http.Get(link2)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var cities []City
+
+		err = json.Unmarshal(body, &cities)
+		if err != nil {
+			log.Fatalf("Error parsing JSON: %v", err)
+		}
+
+		if len(cities) == 0 {
+			log.Fatalf("No city found with the name: %v", city)
+		}
+
+		cityData := cities[0]
+
+		fmt.Println()
+		fmt.Println("*** Daily forecast weather API response ***")
+		fmt.Println()
+		fmt.Printf("Location: %f, %f\n", cityData.Lat, cityData.Lon)
+
+		latStr := strconv.FormatFloat(cityData.Lat, 'f', -1, 64)
+		lonStr := strconv.FormatFloat(cityData.Lon, 'f', -1, 64)
+
+		// Air pollution
+		link3 := "http://api.openweathermap.org/data/2.5/air_pollution?lat=" + latStr + "&lon=" + lonStr + "&appid=" + string(content)
+		
+		resp, err = http.Get(link3)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var response Response
+
+		err = json.Unmarshal(body, &response)
+		if err != nil {
+			log.Fatalf("Error unmarshaling JSON: %v", err)
+		}
+
+		fmt.Println()
+		fmt.Println("*** Air Pollution API response ***")
+		fmt.Println()
+		fmt.Printf("Сoncentration of Carbon monoxide: %.2f μg/m3\n", response.List[0].Components.CO)
+		fmt.Printf("Сoncentration of Nitrogen monoxide: %.2f μg/m3\n", response.List[0].Components.NO)
+		fmt.Printf("Сoncentration of Nitrogen dioxide: %.2f μg/m3\n", response.List[0].Components.NO2)
+		fmt.Printf("Сoncentration of Ozone: %.2f μg/m3\n", response.List[0].Components.O3)
+		fmt.Printf("Сoncentration of Sulphur dioxide: %.2f μg/m3\n", response.List[0].Components.SO2)
+		fmt.Printf("Сoncentration of Fine particles matter: %.2f μg/m3\n", response.List[0].Components.PM25)
+		fmt.Printf("Сoncentration of Coarse particulate matter: %.2f μg/m3\n", response.List[0].Components.PM10)
+		fmt.Printf("Сoncentration of Ammonia: %.2f μg/m3\n", response.List[0].Components.NH3)
+		fmt.Println()
+		
 	} else {
 		fmt.Println("Invalid choice. Terminating the program")
 		return
